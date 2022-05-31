@@ -2,15 +2,10 @@ export class BaseCanvasElement {
 
 
 
-    draw() { }
-}
-
-
-
-export class GraphNode extends BaseCanvasElement {
-
-    draw(): void {
+    draw(ctx:CanvasRenderingContext2D): void {
         
     }
-
 }
+
+
+
