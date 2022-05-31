@@ -1,6 +1,26 @@
 type DistanceTuple = [number, number] // [node, distance]
 const GetCost = (x: DistanceTuple) => x[1]
 
+
+class GraphNode {
+    readonly NodeValue: number;
+    constructor(NodeValue: number) { this.NodeValue = NodeValue}
+}
+
+class GraphEdge {
+    readonly ToNode: GraphNode;
+    readonly Cost: number;
+
+    constructor(ToNode: GraphNode, Cost: number) {
+        this.ToNode = ToNode;
+        this.Cost = Cost;
+    }
+
+    static GetEdgeCost(Edge: GraphEdge) { return Edge.Cost }
+}
+
+
+
 class PriorityQueue<T> {
     readonly items: T[]
     readonly cost_function: (x:T) => number
@@ -33,11 +53,13 @@ class PriorityQueue<T> {
 }
 
 export default class Graph {
-    private adjacency_list: Map<number, DistanceTuple[]> = new Map()
+    private adjacency_list: Map<number, GraphEdge[]> = new Map()
     private n_nodes: number 
+    private NodeRefs: GraphNode[] = []
 
     constructor(number_of_nodes: number) {
         for (let i = 0; i < number_of_nodes; i++) {
+            this.NodeRefs.push(new GraphNode(i))
             this.adjacency_list.set(i, [])
         }
         this.n_nodes = number_of_nodes
@@ -46,8 +68,9 @@ export default class Graph {
 
     addEdge(n1: number, n2: number, distance: number) {
         if (n1 > (this.n_nodes - 1) || n2 > (this.n_nodes - 1)) { throw new Error("Index out of bounds") }
-        this.adjacency_list.get(n1).push([n2,distance])
-        this.adjacency_list.get(n2).push([n1,distance])
+
+        this.adjacency_list.get(n1).push(new GraphEdge(this.NodeRefs[n2], distance))
+        this.adjacency_list.get(n2).push(new GraphEdge(this.NodeRefs[n1], distance))
     }
 
     shortestPath(n1: number, n2: number) {
@@ -55,28 +78,29 @@ export default class Graph {
         for (let i = 0; i< this.n_nodes ;i++) { distances[i] = Number.MAX_SAFE_INTEGER }
         distances[n1] = 0
 
-        const visited = new Set<number>()
-        const Q = new PriorityQueue<DistanceTuple>(GetCost)
-        Q.add([n1, 0])
+        const visited = new Set<GraphNode>()
+        const Q = new PriorityQueue<GraphEdge>(GraphEdge.GetEdgeCost)
+        Q.add(new GraphEdge(this.NodeRefs[n1], 0))
 
         while (!Q.isEmpty()) {
 
-            const [node, priority] = Q.removeMin();
-            visited.add(node)
+            const CurEdge = Q.removeMin();
+            const {ToNode: node, Cost: priority} = CurEdge
+            visited.add(CurEdge.ToNode)
             console.log(`POPPED: ${node} ${priority}`)
-            const neighbors = this.adjacency_list.get(node);
-            neighbors.forEach(edge => {
-                const neighbor = edge[0] 
-                const cost = edge[1]
+            const neighbors = this.adjacency_list.get(node.NodeValue);
+            neighbors.forEach((edge: GraphEdge) => {
+                const neighbor = edge.ToNode
+                const cost = edge.Cost
 
                 if (visited.has(neighbor)) {
                     return
                 }
 
-                if (distances[node] + cost < distances[neighbor]) {
-                    distances[neighbor] = distances[node] + cost   
+                if (distances[node.NodeValue] + cost < distances[neighbor.NodeValue]) {
+                    distances[neighbor.NodeValue] = distances[node.NodeValue] + cost   
                 }
-                Q.add([neighbor, cost])
+                Q.add(new GraphEdge(neighbor, cost))
             })
         }
         return distances[n2]
@@ -97,13 +121,5 @@ G.addEdge(2,3,6)
 
 export function main() {
     console.log(G.shortestPath(0,2))
-    // console.log("----------------")
-    // const Q = new PriorityQueue<DistanceTuple>(GetCost) 
-    // for (let i = 0; i < 10; i++) {
-    //     Q.add([1,Math.floor(Math.random() * 100 + 1)])
-    // }
-    // for (let i = 0; i< 10; i++) console.log(Q.removeMin())
+    console.log(G)
 }
-
-
-
