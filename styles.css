@@ -1,0 +1,7 @@
+.main-wrapper {
+    border: 3px solid pink;
+    height: 800px;
+    width: 1200px;
+    display:flex;
+}
+
