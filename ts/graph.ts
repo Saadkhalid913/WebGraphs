@@ -3,10 +3,10 @@ type DistanceTuple = [number, number] // [node, distance]
 const GetCost = (x: DistanceTuple) => x[1]
 
 
-class GraphNode extends BaseCanvasElement {
+export class GraphNode extends BaseCanvasElement {
     readonly NodeValue: number;
-
-    readonly x: number;
+    private Highlight: boolean = false
+    readonly x: number; 
     readonly y: number;
 
     constructor(NodeValue: number, x: number, y: number) {
@@ -15,14 +15,14 @@ class GraphNode extends BaseCanvasElement {
         this.x = x;
         this.y = y;
     }
-
+    setHighlight(s: boolean) { this.Highlight = s}
 
     draw(ctx: CanvasRenderingContext2D) {
         const { x,y } = this
-        ctx.fillStyle = "#FF0000"
+        ctx.fillStyle = this.Highlight ? 'blue' : 'red'
         ctx.beginPath();
         ctx.moveTo(x,y);
-        ctx.arc(x,y,35,0, 2 * Math.PI, false);
+        ctx.arc(x,y,40,0, 2 * Math.PI, false);
         ctx.fill()
         ctx.closePath();
         
@@ -34,10 +34,11 @@ class GraphNode extends BaseCanvasElement {
     }
 }
 
-class GraphEdge {
+export class GraphEdge {
     readonly ToNode: GraphNode;
     readonly Cost: number;
     readonly FromNode: GraphNode;
+    private Highlight: boolean = false
 
     constructor(ToNode: GraphNode, Cost: number, FromNode: GraphNode) {
         this.ToNode = ToNode;
@@ -47,13 +48,15 @@ class GraphEdge {
 
     static GetEdgeCost(Edge: GraphEdge) { return Edge.Cost }
 
+    setHighlight(s: boolean) { this.Highlight = s}
+
     draw(ctx: CanvasRenderingContext2D) {
         console.log("Drawing...", this)
-        const {x: x1, y: y1} = this.FromNode;
-        const {x: x2, y: y2} = this.ToNode;
-        console.log(x1,x2,y1,y2)
+        let {x: x1, y: y1} = this.FromNode;
+        let {x: x2, y: y2} = this.ToNode;
 
-        ctx.strokeStyle = 'red';
+
+        ctx.strokeStyle = this.Highlight ? 'blue' : 'red';
         ctx.lineWidth = 2;
 
         ctx.beginPath();
@@ -130,6 +133,7 @@ export default class Graph {
     shortestPath(n1: number, n2: number) {
         const distances: number[] = []
         for (let i = 0; i< this.n_nodes ;i++) { distances[i] = Number.MAX_SAFE_INTEGER }
+        const PrevEdges = new Map<GraphNode, GraphEdge>()
         distances[n1] = 0
 
         const visited = new Set<GraphNode>()
@@ -153,11 +157,21 @@ export default class Graph {
 
                 if (distances[node.NodeValue] + cost < distances[neighbor.NodeValue]) {
                     distances[neighbor.NodeValue] = distances[node.NodeValue] + cost   
+                    PrevEdges.set(neighbor, CurEdge)
                 }
                 Q.add(new GraphEdge(neighbor, cost, CurEdge.ToNode))
             })
         }
-        return distances[n2]
+
+        let V_Node = this.NodeRefs[n2]
+        const Edges: GraphEdge[] = []
+        while (V_Node !== this.NodeRefs[n1]) {
+            const PrevEdge = PrevEdges.get(V_Node);
+            const PrevNode = PrevEdge.FromNode;
+            V_Node = PrevNode
+            Edges.push(PrevEdge)
+        }
+        return [distances[n2], Edges]
     }
 }
 

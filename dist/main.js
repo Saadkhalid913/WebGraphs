@@ -44,7 +44,7 @@ var GraphNode = /** @class */ (function (_super) {
         ctx.fillStyle = "#FF0000";
         ctx.beginPath();
         ctx.moveTo(x, y);
-        ctx.arc(x, y, 35, 0, 2 * Math.PI, false);
+        ctx.arc(x, y, 40, 0, 2 * Math.PI, false);
         ctx.fill();
         ctx.closePath();
         ctx.beginPath();
@@ -55,6 +55,7 @@ var GraphNode = /** @class */ (function (_super) {
     };
     return GraphNode;
 }(BaseCanvasElement));
+
 var GraphEdge = /** @class */ (function () {
     function GraphEdge(ToNode, Cost, FromNode) {
         this.ToNode = ToNode;
@@ -66,7 +67,6 @@ var GraphEdge = /** @class */ (function () {
         console.log("Drawing...", this);
         var _a = this.FromNode, x1 = _a.x, y1 = _a.y;
         var _b = this.ToNode, x2 = _b.x, y2 = _b.y;
-        console.log(x1, x2, y1, y2);
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -76,6 +76,7 @@ var GraphEdge = /** @class */ (function () {
     };
     return GraphEdge;
 }());
+
 var PriorityQueue = /** @class */ (function () {
     function PriorityQueue(cost_function) {
         this.items = [];
@@ -189,16 +190,20 @@ var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 
 var ts_G = new graph();
+var Nodes = [];
 function HandleCanvasClickEvent(e) {
     var x = e.clientX;
     var y = e.clientY;
     var Node = ts_G.addNode(x, y);
     Node.draw(ctx);
+    Nodes.push(Node);
 }
 canvas.addEventListener("click", HandleCanvasClickEvent);
+var edges = [];
 document.getElementById("go").addEventListener("click", function () {
-    var edges = ts_G.addEdge(1, 2, 10);
+    edges.push.apply(edges, ts_G.addEdge(0, 1, 10));
     edges.forEach(function (e) { return e.draw(ctx); });
+    Nodes.forEach(function (n) { return n.draw(ctx); });
 });
 
 /******/ })()
